@@ -1,0 +1,73 @@
+# Copyright 2017 Istio Authors
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+##################################################################################################
+# Students service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-service
+  labels:
+    app: student-service
+    visualize: 'true'
+spec:
+  ports:
+  - port: 8081
+    name: http
+  selector:
+    app: student-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: student
+    visualize: 'true'
+  name: student
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: student
+      visualize: 'true'
+  template:
+    metadata:
+      labels:
+        app: student
+        version: v1
+        visualize: 'true'
+    spec:
+     volumes:
+     - name: cloudsql-instance-credentials
+       secret:
+         secretName: cloudsql-instance-credentials
+     containers:
+      - name: student-service
+        image: gcr.io/cnc-app-dev/student-service:V7
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+        volumeMounts:
+        - name: cloudsql-instance-credentials
+          mountPath: "/etc/credentials" 
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: gcp,production
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/credentials/credentials.json
+       
+
+
+
